@@ -1,0 +1,2 @@
+CREATE DATABASE attendance DEFAULT CHARACTER SET UTF8;
+use attendance;
