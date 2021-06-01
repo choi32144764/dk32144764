@@ -49,15 +49,13 @@ class Client(tk.Frame):
         self.cap.set(3, self.cam_width)
         self.cap.set(4, self.cam_height)
 
-        # Application Function
         
-        # cam에서 MTCNN 적용하는 영역
         self.detecting_square = (500, 300)
 
-        # 영상 위에 사각형 색상 지정
+      
         self.rectangle_color = (0, 0, 255)
         
-        # tkinter GUI
+        
         self.width = 740
         self.height = 700
         self.parent = parent
@@ -66,7 +64,7 @@ class Client(tk.Frame):
         self.pack()
         self.create_widgets()
         
-        # Event loop and Thread
+      
         self.event_loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self.mainthread)
         self.thread.start()
@@ -128,16 +126,16 @@ class Client(tk.Frame):
         y2 = int(self.cam_height / 2 + self.detecting_square[1] / 2)
         while getattr(t, "do_run", True):
             ret, frame = self.cap.read()
-            # BGR to RGB
+          
             converted = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             face_list, image_list = self.detect_face(converted[y1:y2, x1:x2])
-            # 얼굴이 인식되면 출석요청
+           
             if face_list:
                 self.event_loop.run_until_complete(self.send_face(face_list, image_list))
-            # 사각형 영역 표시
+          
             frame = cv2.rectangle(frame, (x1, y1), (x2, y2), self.rectangle_color, 3)
             converted = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            # 거울상으로 보여준다
+            
             converted = cv2.flip(converted,1)
             image = Image.fromarray(converted)
             image = ImageTk.PhotoImage(image)
@@ -154,20 +152,17 @@ class Client(tk.Frame):
         try:
             async with websockets.connect(uri) as websocket:
                 for face, image in zip(face_list, image_list):
-                    #type: np.float32
+                    
                     send = json.dumps({'action': 'verify', 'tensor': face.tolist()})
                     await websocket.send(send)
                     recv = await websocket.recv()
                     data = json.loads(recv)
                     if data['status'] == 'success':
-                        # 성공
+                        
                         self.logging('출석확인: ' + data['student_id'])
                         asyncio.ensure_future(self.set_rectangle())
                     else:
-                        # 이미지 DB에 저장, 일단 보류
-                        #if data['status'] == 'fail':
-                        #    send = json.dumps({'action': 'save_image', 'image': image.tolist()})
-                        #    await websocket.send(send)
+                      
                         if data['status'] == 'already':
                             asyncio.ensure_future(self.set_rectangle())
         except Exception as e:
@@ -175,7 +170,7 @@ class Client(tk.Frame):
 
     def stop(self):
         self.thread.do_run = False
-        # self.thread.join() # there is a freeze problem
+       
         self.event_loop.close()
         self.cap.release()
         self.parent.destroy()
